@@ -1,97 +1,125 @@
 import tkinter as tk
 import math
 
-class ScientificCalculator:
+# Just a small calculator class - written casually
+class MySciCalc:
     def __init__(self, root):
+        
         self.root = root
-        self.root.title("Scientific Calculator")
-        self.root.geometry("400x600")
-        self.root.resizable(False, False)
+        root.title("Scientific Calculator")
+        root.geometry("400x600")
+        root.resizable(False, False)
 
-        self.expression = ""
-        self.input_text = tk.StringVar()
+        # storing what user types
+        self._exp = ""
+        self.show_var = tk.StringVar()  
 
-        input_frame = tk.Frame(self.root, width=400, height=50, bd=0, highlightbackground="black", highlightcolor="black", highlightthickness=2)
-        input_frame.pack(side=tk.TOP)
+        # --------- screen box ----------
+        top_part = tk.Frame(root, highlightbackground="black", highlightthickness=2)
+        top_part.pack(side="top", fill="x")
 
-        input_field = tk.Entry(input_frame, font=('arial', 18, 'bold'), textvariable=self.input_text, width=50, bg="#eee", bd=0, justify=tk.RIGHT)
-        input_field.grid(row=0, column=0)
-        input_field.pack(ipady=10)
+        self.screen = tk.Entry(
+            top_part, 
+            textvariable=self.show_var,
+            font=("Arial",18),
+            justify="right",
+            bd=0,
+            bg="#e9e9e9"
+        )
+        self.screen.pack(ipady=10, fill="x")
 
-        btns_frame = tk.Frame(self.root, width=400, height=450, bg="grey")
-        btns_frame.pack()
+        # --------- main button area ----------
+        area = tk.Frame(root, bg="grey")
+        area.pack(fill="both")
 
-        clear = tk.Button(btns_frame, text="C", fg="black", width=32, height=3, bd=0, bg="#fff", cursor="hand2", command=self.clear).grid(row=0, column=0, columnspan=4, padx=1, pady=1)
+        # NOTE: buttons placed manually (not using loops)
+        self._make(area, "C", 0,0, cmd=self.clear_all, span=4, big=True)
 
-        seven = tk.Button(btns_frame, text="7", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(7)).grid(row=1, column=0, padx=1, pady=1)
-        eight = tk.Button(btns_frame, text="8", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(8)).grid(row=1, column=1, padx=1, pady=1)
-        nine = tk.Button(btns_frame, text="9", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(9)).grid(row=1, column=2, padx=1, pady=1)
-        divide = tk.Button(btns_frame, text="/", fg="black", width=10, height=3, bd=0, bg="#eee", cursor="hand2", command=lambda: self.btn_click("/")).grid(row=1, column=3, padx=1, pady=1)
+        self._make(area,"7",1,0,lambda:self.put("7"))
+        self._make(area,"8",1,1,lambda:self.put("8"))
+        self._make(area,"9",1,2,lambda:self.put("9"))
+        self._make(area,"/",1,3,lambda:self.put("/"))
 
-        four = tk.Button(btns_frame, text="4", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(4)).grid(row=2, column=0, padx=1, pady=1)
-        five = tk.Button(btns_frame, text="5", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(5)).grid(row=2, column=1, padx=1, pady=1)
-        six = tk.Button(btns_frame, text="6", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(6)).grid(row=2, column=2, padx=1, pady=1)
-        multiply = tk.Button(btns_frame, text="*", fg="black", width=10, height=3, bd=0, bg="#eee", cursor="hand2", command=lambda: self.btn_click("*")).grid(row=2, column=3, padx=1, pady=1)
+        self._make(area,"4",2,0,lambda:self.put("4"))
+        self._make(area,"5",2,1,lambda:self.put("5"))
+        self._make(area,"6",2,2,lambda:self.put("6"))
+        self._make(area,"*",2,3,lambda:self.put("*"))
 
-        one = tk.Button(btns_frame, text="1", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(1)).grid(row=3, column=0, padx=1, pady=1)
-        two = tk.Button(btns_frame, text="2", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(2)).grid(row=3, column=1, padx=1, pady=1)
-        three = tk.Button(btns_frame, text="3", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(3)).grid(row=3, column=2, padx=1, pady=1)
-        minus = tk.Button(btns_frame, text="-", fg="black", width=10, height=3, bd=0, bg="#eee", cursor="hand2", command=lambda: self.btn_click("-")).grid(row=3, column=3, padx=1, pady=1)
+        self._make(area,"1",3,0,lambda:self.put("1"))
+        self._make(area,"2",3,1,lambda:self.put("2"))
+        self._make(area,"3",3,2,lambda:self.put("3"))
+        self._make(area,"-",3,3,lambda:self.put("-"))
 
-        zero = tk.Button(btns_frame, text="0", fg="black", width=21, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(0)).grid(row=4, column=0, columnspan=2, padx=1, pady=1)
-        point = tk.Button(btns_frame, text=".", fg="black", width=10, height=3, bd=0, bg="#eee", cursor="hand2", command=lambda: self.btn_click(".")).grid(row=4, column=2, padx=1, pady=1)
-        plus = tk.Button(btns_frame, text="+", fg="black", width=10, height=3, bd=0, bg="#eee", cursor="hand2", command=lambda: self.btn_click("+")).grid(row=4, column=3, padx=1, pady=1)
+        self._make(area,"0",4,0,lambda:self.put("0"), span=2)
+        self._make(area,".",4,2,lambda:self.put("."))
+        self._make(area,"+",4,3,lambda:self.put("+"))
 
-        sin = tk.Button(btns_frame, text="sin", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("sin")).grid(row=5, column=0, padx=1, pady=1)
-        cos = tk.Button(btns_frame, text="cos", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("cos")).grid(row=5, column=1, padx=1, pady=1)
-        tan = tk.Button(btns_frame, text="tan", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("tan")).grid(row=5, column=2, padx=1, pady=1)
-        log = tk.Button(btns_frame, text="log", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("log")).grid(row=5, column=3, padx=1, pady=1)
+        # scientific row
+        self._make(area,"sin",5,0,lambda:self.do_sci("sin"))
+        self._make(area,"cos",5,1,lambda:self.do_sci("cos"))
+        self._make(area,"tan",5,2,lambda:self.do_sci("tan"))
+        self._make(area,"log",5,3,lambda:self.do_sci("log"))
 
-        sqrt = tk.Button(btns_frame, text="sqrt", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("sqrt")).grid(row=6, column=0, padx=1, pady=1)
-        exp = tk.Button(btns_frame, text="exp", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.scientific_click("exp")).grid(row=6, column=1, padx=1, pady=1)
-        pi = tk.Button(btns_frame, text="pi", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(math.pi)).grid(row=6, column=2, padx=1, pady=1)
-        e = tk.Button(btns_frame, text="e", fg="black", width=10, height=3, bd=0, bg="#fff", cursor="hand2", command=lambda: self.btn_click(math.e)).grid(row=6, column=3, padx=1, pady=1)
+        self._make(area,"sqrt",6,0,lambda:self.do_sci("sqrt"))
+        self._make(area,"exp",6,1,lambda:self.do_sci("exp"))
+        self._make(area,"pi",6,2,lambda:self.put(str(math.pi)))
+        self._make(area,"e",6,3,lambda:self.put(str(math.e)))
 
-        equals = tk.Button(btns_frame, text="=", fg="black", width=32, height=3, bd=0, bg="#eee", cursor="hand2", command=self.equalpress).grid(row=7, column=0, columnspan=4, padx=1, pady=1)
+        self._make(area,"=",7,0,self.equals, span=4, big=True)
 
-    def btn_click(self, item):
-        self.expression = self.expression + str(item)
-        self.input_text.set(self.expression)
+    # making button
+    def _make(self, parent, txt, r, c, cmd=None, span=1, big=False):
+        w = 33 if big else 10
+        tk.Button(parent, text=txt, width=w, height=3, bd=0,
+                  command=cmd, bg="white").grid(
+                      row=r, column=c, columnspan=span, padx=1, pady=1
+                  )
 
-    def scientific_click(self, func):
+    # add items to expression
+    def put(self, x):
+        self._exp = self._exp + str(x)
+        self.show_var.set(self._exp)
+
+    def clear_all(self):
+        self._exp = ""
+        self.show_var.set("")
+
+    # scientific operations
+    def do_sci(self, what):
         try:
-            if func == "sin":
-                result = math.sin(float(self.expression))
-            elif func == "cos":
-                result = math.cos(float(self.expression))
-            elif func == "tan":
-                result = math.tan(float(self.expression))
-            elif func == "log":
-                result = math.log10(float(self.expression))
-            elif func == "sqrt":
-                result = math.sqrt(float(self.expression))
-            elif func == "exp":
-                result = math.exp(float(self.expression))
-            self.input_text.set(result)
-            self.expression = str(result)
-        except:
-            self.input_text.set("Error")
-            self.expression = ""
+            val = float(self._exp)
+            if what == "sin":
+                res = math.sin(val)
+            elif what == "cos":
+                res = math.cos(val)
+            elif what == "tan":
+                res = math.tan(val)
+            elif what == "log":
+                res = math.log10(val)
+            elif what == "sqrt":
+                res = math.sqrt(val)
+            else:
+                res = math.exp(val)
 
-    def clear(self):
-        self.expression = ""
-        self.input_text.set("")
+            self._exp = str(res)
+            self.show_var.set(res)
 
-    def equalpress(self):
+        except Exception:
+            self.show_var.set("Error")
+            self._exp = ""
+
+    # normal calc
+    def equals(self):
         try:
-            total = str(eval(self.expression))
-            self.input_text.set(total)
-            self.expression = total
+            ans = str(eval(self._exp))
+            self.show_var.set(ans)
+            self._exp = ans
         except:
-            self.input_text.set("Error")
-            self.expression = ""
+            self.show_var.set("Error")
+            self._exp = ""
+
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    ScientificCalculator(root)
-    root.mainloop()
+    r = tk.Tk()
+    MySciCalc(r)
+    r.mainloop()
